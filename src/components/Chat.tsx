@@ -19,6 +19,7 @@ import OrderSummary from "@/components/OrderSummary";
 import { orderSchema, type Order } from "@/lib/order";
 import { WARUNG_NAME } from "@/lib/menu";
 import { RiSendPlaneFill, RiWhatsappLine, RiMailLine, RiStoreLine } from "@remixicon/react";
+import Markdown from "react-markdown";
 
 interface Message {
   role: "user" | "assistant";
@@ -187,17 +188,21 @@ export default function Chat({ phone, contactEmail }: Props) {
               {messages.map((msg, i) => (
                 <MessageScrollerItem key={i} scrollAnchor={i === messages.length - 1}>
                   <div className={msg.role === "user" ? "flex justify-end" : "flex justify-start"}>
-                    <BubbleGroup>
+                    <BubbleGroup className={msg.role === "user" ? "min-w-fit" : ""}>
                       <Bubble
                         variant={msg.role === "user" ? "default" : "outline"}
                         align={msg.role === "user" ? "end" : "start"}
                         className="max-w-[85%]"
                       >
-                        <BubbleContent className="whitespace-pre-wrap text-sm leading-relaxed">
-                          {msg.content || (
-                            isLoading && i === messages.length - 1 ? (
-                              <Spinner className="size-3.5" />
-                            ) : null
+                        <BubbleContent className="text-sm leading-relaxed min-w-8">
+                          {msg.role === "assistant" ? (
+                            msg.content
+                              ? <div className="prose prose-sm prose-neutral max-w-none [&>*:first-child]:mt-0 [&>*:last-child]:mb-0"><Markdown>{msg.content}</Markdown></div>
+                              : isLoading && i === messages.length - 1
+                                ? <Spinner className="size-3.5" />
+                                : null
+                          ) : (
+                            <span className="whitespace-pre-wrap wrap-break-word">{msg.content}</span>
                           )}
                         </BubbleContent>
                       </Bubble>
