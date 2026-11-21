@@ -2,6 +2,7 @@
 
 import { useState, useRef, useCallback } from "react";
 import { track } from "@vercel/analytics";
+import Link from "next/link";
 import {
   MessageScroller,
   MessageScrollerViewport,
@@ -14,12 +15,10 @@ import { Bubble, BubbleContent, BubbleGroup } from "@/components/ui/bubble";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Spinner } from "@/components/ui/spinner";
-import { Separator } from "@/components/ui/separator";
 import OrderSummary from "@/components/OrderSummary";
-import ContactBanner from "@/components/ContactBanner";
 import { orderSchema, type Order } from "@/lib/order";
 import { WARUNG_NAME } from "@/lib/menu";
-import { RiSendPlaneLine } from "@remixicon/react";
+import { RiSendPlaneFill, RiWhatsappLine, RiMailLine, RiStoreLine } from "@remixicon/react";
 
 interface Message {
   role: "user" | "assistant";
@@ -35,7 +34,7 @@ export default function Chat({ phone, contactEmail }: Props) {
   const [messages, setMessages] = useState<Message[]>([
     {
       role: "assistant",
-      content: `Halo! Selamat datang di ${WARUNG_NAME}. Ada yang bisa saya bantu? Mau lihat menu atau langsung pesan?`,
+      content: `Halo! Selamat datang di ${WARUNG_NAME}.\n\nSaya bisa bantu kamu lihat menu, cek harga, atau langsung pesan. Mau mulai dari mana?`,
     },
   ]);
   const [input, setInput] = useState("");
@@ -68,7 +67,6 @@ export default function Chat({ phone, contactEmail }: Props) {
         return;
       }
 
-      // Parse SSE stream
       const reader = res.body!.getReader();
       const decoder = new TextDecoder();
       let buffer = "";
@@ -142,26 +140,64 @@ export default function Chat({ phone, contactEmail }: Props) {
 
   return (
     <div className="flex h-full flex-col">
+      {/* Header */}
+      <header className="shrink-0 bg-emerald-700 px-4 py-3 text-white">
+        <div className="flex items-center justify-between gap-3">
+          <div className="flex items-center gap-2.5">
+            <div className="flex size-8 shrink-0 items-center justify-center rounded-full bg-white/15">
+              <RiStoreLine className="size-4" />
+            </div>
+            <div>
+              <p className="text-xs font-medium text-emerald-200">Demo Asisten Pesan</p>
+              <h1 className="font-heading text-base font-semibold leading-tight">{WARUNG_NAME}</h1>
+            </div>
+          </div>
+          <div className="flex gap-2">
+            {phone && (
+              <Link
+                href={`https://wa.me/${phone}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                onClick={() => track("contact_click")}
+                className="inline-flex items-center gap-1.5 rounded-full bg-white/15 px-3 py-1.5 text-xs font-medium text-white hover:bg-white/25 transition-colors"
+              >
+                <RiWhatsappLine className="size-3.5" />
+                Hubungi Widi
+              </Link>
+            )}
+            {contactEmail && (
+              <Link
+                href={`mailto:${contactEmail}`}
+                onClick={() => track("contact_click")}
+                className="inline-flex items-center rounded-full bg-white/15 p-1.5 text-white hover:bg-white/25 transition-colors"
+                aria-label="Email"
+              >
+                <RiMailLine className="size-3.5" />
+              </Link>
+            )}
+          </div>
+        </div>
+      </header>
+
+      {/* Chat area */}
       <MessageScrollerProvider>
-        <MessageScroller className="flex-1 min-h-0">
+        <MessageScroller className="flex-1 min-h-0 bg-stone-50">
           <MessageScrollerViewport>
-            <MessageScrollerContent className="p-4">
+            <MessageScrollerContent className="px-4 py-4">
               {messages.map((msg, i) => (
                 <MessageScrollerItem key={i} scrollAnchor={i === messages.length - 1}>
-                  <div
-                    className={
-                      msg.role === "user" ? "flex justify-end" : "flex justify-start"
-                    }
-                  >
+                  <div className={msg.role === "user" ? "flex justify-end" : "flex justify-start"}>
                     <BubbleGroup>
                       <Bubble
-                        variant={msg.role === "user" ? "default" : "muted"}
+                        variant={msg.role === "user" ? "default" : "outline"}
                         align={msg.role === "user" ? "end" : "start"}
+                        className="max-w-[85%]"
                       >
-                        <BubbleContent className="whitespace-pre-wrap">
-                          {msg.content}
-                          {msg.role === "assistant" && isLoading && i === messages.length - 1 && !msg.content && (
-                            <Spinner className="size-3" />
+                        <BubbleContent className="whitespace-pre-wrap text-sm leading-relaxed">
+                          {msg.content || (
+                            isLoading && i === messages.length - 1 ? (
+                              <Spinner className="size-3.5" />
+                            ) : null
                           )}
                         </BubbleContent>
                       </Bubble>
@@ -172,16 +208,41 @@ export default function Chat({ phone, contactEmail }: Props) {
 
               {order && (
                 <MessageScrollerItem scrollAnchor>
-                  <div className="mt-2">
+                  <div className="mt-3">
                     <OrderSummary order={order} phone={phone} />
                   </div>
                 </MessageScrollerItem>
               )}
 
-              {showContact && (
+              {showContact && !order && (
                 <MessageScrollerItem scrollAnchor>
-                  <div className="mt-2">
-                    <ContactBanner phone={phone} email={contactEmail} />
+                  <div className="mt-3 rounded-xl border border-emerald-100 bg-emerald-50 px-4 py-3 text-sm text-emerald-800">
+                    <p className="font-medium mb-1">Tertarik buat yang serupa?</p>
+                    <p className="text-xs text-emerald-600 mb-2">Hubungi Widi untuk lihat demo atau diskusi kebutuhan usahamu.</p>
+                    <div className="flex gap-2">
+                      {phone && (
+                        <Link
+                          href={`https://wa.me/${phone}`}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          onClick={() => track("contact_click")}
+                          className="inline-flex items-center gap-1.5 rounded-lg bg-emerald-600 px-3 py-1.5 text-xs font-medium text-white hover:bg-emerald-700 transition-colors"
+                        >
+                          <RiWhatsappLine className="size-3" />
+                          WhatsApp
+                        </Link>
+                      )}
+                      {contactEmail && (
+                        <Link
+                          href={`mailto:${contactEmail}`}
+                          onClick={() => track("contact_click")}
+                          className="inline-flex items-center gap-1.5 rounded-lg border border-emerald-200 bg-white px-3 py-1.5 text-xs font-medium text-emerald-700 hover:bg-emerald-50 transition-colors"
+                        >
+                          <RiMailLine className="size-3" />
+                          Email
+                        </Link>
+                      )}
+                    </div>
                   </div>
                 </MessageScrollerItem>
               )}
@@ -191,9 +252,9 @@ export default function Chat({ phone, contactEmail }: Props) {
         </MessageScroller>
       </MessageScrollerProvider>
 
-      <div className="shrink-0">
-        <Separator />
-        <div className="flex gap-2 p-3">
+      {/* Input area */}
+      <div className="shrink-0 bg-white border-t border-stone-200 px-3 py-3">
+        <div className="flex items-end gap-2">
           <Textarea
             ref={textareaRef}
             value={input}
@@ -202,15 +263,16 @@ export default function Chat({ phone, contactEmail }: Props) {
             placeholder="Ketik pesan…"
             disabled={isLoading}
             rows={1}
-            className="flex-1 resize-none min-h-0"
+            className="flex-1 resize-none min-h-0 max-h-32 rounded-xl border-stone-200 bg-stone-50 text-sm focus-visible:border-emerald-400 focus-visible:ring-emerald-200"
           />
           <Button
             onClick={submit}
             disabled={!input.trim() || isLoading}
             size="icon"
+            className="shrink-0 rounded-xl size-9 bg-emerald-600 hover:bg-emerald-700 text-white"
             aria-label="Kirim"
           >
-            {isLoading ? <Spinner /> : <RiSendPlaneLine />}
+            {isLoading ? <Spinner className="size-3.5" /> : <RiSendPlaneFill className="size-4" />}
           </Button>
         </div>
       </div>
