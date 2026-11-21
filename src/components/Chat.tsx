@@ -188,25 +188,23 @@ export default function Chat({ phone, contactEmail }: Props) {
               {messages.map((msg, i) => (
                 <MessageScrollerItem key={i} scrollAnchor={i === messages.length - 1}>
                   <div className={msg.role === "user" ? "flex justify-end" : "flex justify-start"}>
-                    <BubbleGroup className={msg.role === "user" ? "min-w-fit" : ""}>
-                      <Bubble
-                        variant={msg.role === "user" ? "default" : "outline"}
-                        align={msg.role === "user" ? "end" : "start"}
-                        className="max-w-[85%]"
-                      >
-                        <BubbleContent className="text-sm leading-relaxed min-w-8">
-                          {msg.role === "assistant" ? (
-                            msg.content
+                    {msg.role === "user" ? (
+                      <div className="max-w-[80%] rounded-none bg-primary px-3 py-2 text-sm text-primary-foreground whitespace-pre-wrap wrap-break-word">
+                        {msg.content}
+                      </div>
+                    ) : (
+                      <BubbleGroup>
+                        <Bubble variant="outline" align="start">
+                          <BubbleContent className="text-sm leading-relaxed">
+                            {msg.content
                               ? <div className="prose prose-sm prose-neutral max-w-none [&>*:first-child]:mt-0 [&>*:last-child]:mb-0"><Markdown>{msg.content}</Markdown></div>
                               : isLoading && i === messages.length - 1
                                 ? <Spinner className="size-3.5" />
-                                : null
-                          ) : (
-                            <span className="whitespace-pre-wrap wrap-break-word">{msg.content}</span>
-                          )}
-                        </BubbleContent>
-                      </Bubble>
-                    </BubbleGroup>
+                                : null}
+                          </BubbleContent>
+                        </Bubble>
+                      </BubbleGroup>
+                    )}
                   </div>
                 </MessageScrollerItem>
               ))}
